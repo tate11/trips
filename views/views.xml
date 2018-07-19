@@ -1,0 +1,247 @@
+<odoo>
+  <data>
+    <!-- groups -->
+    <record id="ir_module_category_trips0" model="ir.module.category">
+      <field name="name">Trips</field>
+    </record>
+    <record id="res_groups_manager0" model="res.groups">
+      <field model="ir.module.category" name="category_id" search="[('name', '=', 'Trips')]"/>
+      <field name="name">Manager</field>
+    </record>
+    <record id="ir_model_access_tripmanage0" model="ir.model.access">
+      <field eval="1" name="perm_create"/>
+      <field eval="1" name="perm_write"/>
+      <field name="model_id" ref="trips.model_trips_trip"/>
+      <field name="name">trips_manager</field>
+      <field eval="1" name="perm_read"/>
+      <field model="res.groups" name="group_id" search="[('full_name', '=', 'Trips / Manager')]"/>
+      <field eval="1" name="perm_unlink"/>
+    </record> 
+    <record id="ir_model_access_tripstripreadall0" model="ir.model.access">
+      <field eval="0" name="perm_create"/>
+      <field eval="0" name="perm_write"/>
+      <field name="model_id" ref="trips.model_trips_trip"/>
+      <field name="name">trips_trip read all</field>
+      <field eval="1" name="perm_read"/>
+      <field eval="0" name="perm_unlink"/>
+    </record> 
+
+    <!-- main menu entry -->
+    <menuitem name="Trips" id="trips.menu_root"/>
+
+    <!-- actions -->
+    <record model="ir.actions.act_window" id="trips.action_window">
+      <field name="name">Trips</field>
+      <field name="res_model">trips.trip</field>
+      <field name="view_mode">tree,form,calendar,pivot</field>
+    </record>
+    <record model="ir.actions.act_window" id="trips.todos_action_window">
+      <field name="name">ToDos</field>
+      <field name="res_model">trips.trip</field>
+      <field name="domain">[('special_instruction','!=',''), ('done', '=', False)]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    <record model="ir.actions.act_window" id="trips.wizard_action_window">
+      <field name="name">Mass Create Trips</field>
+      <field name="res_model">trips.trip_wizard</field>
+      <field name="view_mode">form</field>
+      <field name="target">inline</field>
+    </record>
+
+    <!-- menu items -->
+    <menuitem name="Trips" id="trips.menu_trips" parent="trips.menu_root"
+              action="trips.action_window"/>
+    <menuitem name="ToDos" id="trips.menu_todos" parent="trips.menu_root"
+              action="trips.todos_action_window"/>
+    <menuitem name="Mass Create Trips" id="trips.menu_trip_wizard" parent="trips.menu_root"
+              action="trips.wizard_action_window" groups="trips.res_groups_manager0"/>
+
+    <!-- views -->
+    <record model="ir.ui.view" id="trips.trips_list">
+      <field name="name">Trips list</field>
+      <field name="model">trips.trip</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="day_start"/>
+	  <field name="short_name"/>
+          <!-- field name="driver"/>
+          <field name="vehicle"/ -->
+          <field name="compensation"/>
+	  <!-- field name="special_instruction"/ -->
+          <field name="done"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="trips.trips_form">
+      <field name="name">Default form view for Trip</field>
+      <field name="model">trips.trip</field>
+      <field name="arch" type="xml">
+	<form>
+          <sheet string="Trip">
+            <group>
+	      <group>
+		<h2>Trip data</h2>
+		<field name="day_start" required="1" attrs="{}"/>
+		<field name="driver"/>
+		<field name="vehicle"/>
+		<field name="special_instruction"/>
+		<field name="done"/>
+		<!-- field name="short_name"/ -->
+	      </group>
+              <group>
+		<h2>Compensation</h2>
+		<field name="compensation_rate"/>
+		<field name="compensation_correction"/>
+		<field name="compensation"/>
+	      </group>
+            </group>
+	    <p><h2>Notes:</h2>
+	    <ul>
+	      <li>Leave Vehicle empty to make this record a Vacation day with zero Compensation Rate.</li>
+	      <li>Set Special Instruction to make this record a ToDo item.</li>
+	    </ul>
+	    </p>
+	    <!-- div>
+	      <h2>Notes</h2>
+	      <field name="notes"/>
+	    </div -->
+          </sheet>
+	  <div class="oe_chatter">
+            <field name="message_follower_ids" widget="mail_followers"/>
+            <field name="message_ids" widget="mail_thread"/>
+          </div>
+	</form>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="trips.trips_calendar">
+      <field name="name">Default calendar view for Trips</field>
+      <field name="model">trips.trip</field>
+      <field name="arch" type="xml">
+	<calendar date_start="day_start" date_stop="" string="Default calendar view for Trips" color="driver" mode="month" quick_add="false"/>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="trips.trips_search">
+      <field name="name">Default search view for Trips</field>
+      <field name="model">trips.trip</field>
+      <field name="arch" type="xml">
+	<search>
+	  <field name="short_name" string="Trips"/>
+	</search>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="trips.trips_pivot">
+      <field name="name">Default pivot view for Trips</field>
+      <field name="model">trips.trip</field>
+      <field name="arch" type="xml">
+	<pivot string="Trip">
+	  <field name="employee_number" type="row"/>
+	  <field name="day_start" type="col" />
+	  <field name="compensation" type="measure" />
+	</pivot>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="trips.trips_wizard">
+      <field name="name">trips.trip_wizard</field>
+      <field name="model">trips.trip_wizard</field>
+      <field name="arch" type="xml">
+	<form string="Create Trips" create="false" edit="false">
+          <sheet>
+	    <h1>Mass Create Trips</h1>
+            <group>
+	      <group>
+		<h2>Trip data</h2>
+		<field name="day_start"/>
+		<field name="day_end"/>
+		<field name="driver"/>
+		<field name="vehicle"/>
+	      </group>
+              <group>
+		<h2>Parameters</h2>
+		<field name="special_instruction_first"/>
+		<field name="special_instruction_last"/>
+		<field name="compensation_correction"/>
+	      </group>
+            </group>
+	    <p><h2>Notes:</h2>
+	    <ul>
+	      <li>Leave Vehicle empty to make this record a Vacation day with zero Compensation Rate.</li>
+	      <li>Set Special Instruction to make this record a ToDo item.</li>
+	    </ul>
+	    </p>
+	    <footer>
+	      <button name="create_trips" type="object"
+		      string="Create" class="oe_highlight"/>
+	    </footer>
+          </sheet>
+	</form>
+      </field>
+    </record>
+    
+    <!-- EMPLOYEE -->
+    <record id="ir_ui_view_hremployeeform0" model="ir.ui.view">
+      <field name="name">hr.view_employee_form1</field>
+      <field name="model">hr.employee</field> 
+      <field name="inherit_id" ref="hr.view_employee_form"/>
+      <field name="arch" type="xml">
+        <div class="oe_button_box" position="inside">
+          <button class="oe_stat_button" name="trips_view" type="object" icon="fa-calendar">
+            <field string="Trips" name="trips_count" widget="statinfo"/>
+          </button>
+	</div>
+	<field name="address_home_id" position="replace">
+	  <field name="address_home_id" invisible="1" />
+	  <field name="private_address_textual" />
+	</field>
+	<field name="user_id" position="replace">
+	  <field name="user_id"/>
+	  <field name="employee_number"/>
+	  <field name="employment_start"/>
+	  <field name="employment_end"/>
+	</field>
+      </field>
+    </record>
+
+    <record id="ir_ui_view_hremployeetree0" model="ir.ui.view">
+      <field name="name">hr.view_employee_tree1</field>
+      <field name="model">hr.employee</field>
+      <field name="inherit_id" ref="hr.view_employee_tree" />
+      <field name="arch" type="xml">
+	<xpath expr="//field[@name='name']" position="replace">
+	  <field name="name"/>
+	  <field name="employee_number"/>
+	  <field name="gender"/>
+	  <field name="birthday"/>
+	  <field name="country_id"/>
+	  <field name="private_address_textual"/>
+	  <field name="employment_start"/>
+	  <field name="employment_end"/>
+	</xpath>
+	<field name="work_phone" position="replace"/>
+	<field name="work_email" position="replace"/>
+	<field name="department_id" position="replace"/>
+	<field name="job_id" position="replace"/>
+	<field name="parent_id" position="replace"/>
+      </field>
+    </record>
+
+    <!-- VEHICLE -->
+    <record id="ir_ui_view_fleetvehicleform0" model="ir.ui.view">
+      <field name="name">fleet.view_vehicle_form1</field>
+      <field name="model">fleet.vehicle</field> 
+      <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+      <field name="arch" type="xml">
+        <div class="oe_button_box" position="inside">
+          <button class="oe_stat_button" name="trips_view" type="object" icon="fa-calendar">
+            <field string="Trips" name="trips_count" widget="statinfo"/>
+          </button>
+	</div>
+      </field>
+    </record>
+
+  </data>
+</odoo>

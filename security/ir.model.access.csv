@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_savor_fleet_savor_fleet,savor_fleet.savor_fleet,model_savor_fleet_savor_fleet,,1,0,0,0

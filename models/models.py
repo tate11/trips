@@ -88,6 +88,9 @@ class Trip(models.Model):
     _description = "Trip Details"
     
     day_start = fields.Date(_('Date'), required=True)
+    # TODO web_timeline all_day?
+    day_next = fields.Date('', store=False, compute='_day_next')
+    
     driver = fields.Many2one('hr.employee', _('Driver'), required=True)
     employee_number = fields.Char(related='driver.employee_number', store=True)
     vehicle = fields.Many2one('fleet.vehicle', _('Vehicle'), required=False)
@@ -98,9 +101,50 @@ class Trip(models.Model):
     special_instruction = fields.Char(_('Special Instruction'))
     done = fields.Boolean(_('Done'))
 
-    short_name = fields.Char(_('Trip'), store=True, compute='_custom_name_get')
+    short_name = fields.Char(_('Trip'), store=True, compute='_short_name')
     #notes = fields.Text(_('Notes'))
 
+    is_start = fields.Boolean('', store=False, compute='_is_start')
+    is_end = fields.Boolean('', store=False, compute='_is_end')
+    is_vacation = fields.Boolean('', store=False, compute='_is_vacation')
+    is_regular = fields.Boolean('', store=False, compute='_is_regular')
+
+    @api.multi
+    @api.depends('driver', 'day_start', 'vehicle')
+    def _is_start(self):
+        for record in self:
+            day_pre = fields.Date.from_string(record.day_start) - timedelta(days = 1)
+            r_pre = record.env['trips.trip'].search([('day_start', '=', day_pre), ('driver', '=', record.driver.id)], limit=1)
+            record.is_start = (not r_pre) or (not r_pre.vehicle)
+    
+    @api.multi
+    @api.depends('driver', 'day_start', 'vehicle')
+    def _is_end(self):
+        for record in self:
+            day_post = fields.Date.from_string(record.day_start) + timedelta(days = 1)
+            r_post = record.env['trips.trip'].search([('day_start', '=', day_post), ('driver', '=', record.driver.id)], limit=1)
+            record.is_end = (not r_post) or (not r_post.vehicle)
+    
+    @api.multi
+    @api.depends('vehicle')
+    def _is_vacation(self):
+        for record in self:
+            record.is_vacation = not record.vehicle
+    
+    @api.multi
+    @api.depends('is_start', 'is_end', 'is_vacation')
+    def _is_regular(self):
+        for record in self:
+            record.is_regular = not (record.is_start or record.is_end or record.is_vacation)
+    
+    @api.multi
+    @api.depends('day_start')
+    def _day_next(self):
+        for record in self:
+            start = fields.Date.from_string(record.day_start)
+            record.day_next = start + timedelta(days = 1)
+
+            
     @api.multi
     @api.depends('driver', 'day_start', 'vehicle')
     def _compensation_rate(self):
@@ -113,13 +157,13 @@ class Trip(models.Model):
             if not emp.employment_start:
                 record.compensation_rate = 0.0
                 continue
-            if not self.day_start:
+            if not record.day_start:
                 record.compensation_rate = 0.0
                 continue
             estart = fields.Date.from_string(emp.employment_start)
             eend = fields.Date.from_string(emp.employment_end)
             emax = estart + timedelta(days = 730)
-            date_now = fields.Date.from_string(self.day_start)
+            date_now = fields.Date.from_string(record.day_start)
             if eend:
                 if date_now > eend:
                     record.compensation_rate = 0.0
@@ -144,18 +188,15 @@ class Trip(models.Model):
 
     @api.multi
     @api.depends('driver', 'vehicle', 'special_instruction')
-    def _custom_name_get(self):
-        res = []
+    def _short_name(self):
         for record in self:
             if record.vehicle:
-                n = "[%s]" % record.vehicle.license_plate, record.driver.name
+                n = "[%s] %s" % (record.vehicle.license_plate, record.driver.name)
             else:
-                n = "[%s]" % _('VACATION')
+                n = "[%s] %s" % (_('VACATION'), record.driver.name)
 
-            n += " %s" % record.driver.name
-            
             if record.special_instruction:
-                n += " *%s*" % record.special_instruction
+                n = "%s *%s*" % (n, record.special_instruction)
             record.short_name = n
 
     @api.multi
@@ -204,7 +245,7 @@ class TripWizard(models.TransientModel):
             'res_model': 'trips.trip',
             'domain': [('id', 'in', ids)],
             'type': 'ir.actions.act_window',
-            'view_mode': 'tree,form,calendar,pivot',
+            'view_mode': 'timeline,tree,form,pivot',
             'target': 'main',
             'context': "{'default_driver': %d, 'default_vehicle': %d}" % (driver, vehicle)
         }

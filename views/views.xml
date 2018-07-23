@@ -33,13 +33,13 @@
     <record model="ir.actions.act_window" id="trips.action_window">
       <field name="name">Trips</field>
       <field name="res_model">trips.trip</field>
-      <field name="view_mode">tree,form,calendar,pivot</field>
+      <field name="view_mode">timeline,tree,form,pivot</field>
     </record>
     <record model="ir.actions.act_window" id="trips.todos_action_window">
       <field name="name">ToDos</field>
       <field name="res_model">trips.trip</field>
       <field name="domain">[('special_instruction','!=',''), ('done', '=', False)]</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">tree,form,timeline</field>
     </record>
     <record model="ir.actions.act_window" id="trips.wizard_action_window">
       <field name="name">Mass Create Trips</field>
@@ -122,6 +122,22 @@
 	<calendar date_start="day_start" date_stop="" string="Default calendar view for Trips" color="driver" mode="month" quick_add="false"/>
       </field>
     </record>
+
+    <record id="view_task_timeline" model="ir.ui.view">
+      <field name="model">trips.trip</field>
+      <field name="type">timeline</field>
+      <field name="arch" type="xml">
+	<timeline date_start="day_start"
+		  date_stop="day_next"
+		  mode="month"
+		  string="Trips Timeline"
+		  default_group_by="driver"
+		  event_open_popup="true"
+		  colors="#c0ffc0:is_start == true;#ffc0c0:is_end == true;#c0c0ff:is_vacation == true;#ffffff:is_regular == true;#000000:special_instruction == 3.14">
+	</timeline>
+      </field>
+    </record>
+
 
     <record model="ir.ui.view" id="trips.trips_search">
       <field name="name">Default search view for Trips</field>
